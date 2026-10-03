@@ -36,8 +36,11 @@ def run_training():
 
     df = pd.read_csv(data_path)
 
-    X = df.drop(columns=["Default"])
+    feature_cols = ["Income", "Age", "Loan"]
+    X = df[feature_cols].copy()
     y = df["Default"]
+
+    X["Loan to Income"] = df["Loan"] / df["Income"]
 
     numeric_features = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
 
