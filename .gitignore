@@ -1,0 +1,22 @@
+# Sanal Ortam
+venv/
+.env
+
+# Python Önbellekleri
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Veri Dosyaları (Büyük dosyalar depoyu şişirmesin)
+data/*.csv
+data/raw/
+data/processed/
+
+# Eğitilmiş Model Dosyaları
+models/*.pkl
+models/*.joblib
+
+# İşletim sistemi ve editör dosyaları
+.vscode/
+.DS_Store
+Thumbs.db
