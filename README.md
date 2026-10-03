@@ -5,57 +5,56 @@
 [![Pandas](https://img.shields.io/badge/Pandas-2.0%2B-150458.svg)](https://pandas.pydata.org/)
 [![Code Style](https://img.shields.io/badge/Code%20Style-PEP8-brightgreen.svg)](https://peps.python.org/pep-0008/)
 
-Endüstri standardı makine öğrenmesi pratikleri (MLOps) kullanılarak geliştirilmiş, bankacılık ve finans sektörü odaklı bir **Kredi Temerrüt Tahmini (Credit Default Risk)** projesidir. Ham müşteri başvuru verilerinden hareketle, kredi geri ödememe riskini olasılıksal olarak tahmin eden modüler bir Scikit-learn Pipeline mimarisi sunar.
+A production-ready **Credit Default Risk Prediction** project developed using industry-standard machine learning workflows and MLOps practices. Built for banking and financial applications, it features a modular Scikit-learn Pipeline architecture that estimates the probability of loan default directly from raw applicant profiles.
 
 ---
 
-## 📌 İş Problemi ve Yaklaşım (Business Context)
+## 📌 Business Context & Objective
 
-Bankacılıkta temerrüt (default), bir müşterinin yasal süre içerisinde borcunu ödeyememesi durumudur. Yanlış kredi kararları bankalar için yüksek kredi zarar provizyonu ve finansal kayıp doğururken, aşırı katı kurallar ise potansiyel karlı müşterilerin kaybına yol açar.
+In retail banking, loan default occurs when a borrower fails to meet legal debt obligations. Inaccurate credit assessment leads to severe provisioning costs and portfolio losses, whereas overly conservative policies alienate profitable clients.
 
-Bu projede amaç:
-- Başvuru aşamasındaki müşterileri **Güvenli (0)** veya **Riskli / Temerrüt (1)** olarak sınıflandırmak.
-- Veri sızıntısını (**Data Leakage**) tamamen engelleyen kapalı devre bir dönüşüm hattı kurmak.
-- Üretim (Production) ortamına girmeye hazır, tek formatlı girdiyle çıkarım yapabilen bir boru hattı (`.pkl`) sunmaktır.
-
----
-
-## 🛠️ Mimari ve Mühendislik Prensipleri
-
-Proje geliştirilirken aşağıdaki standartlara sadık kalınmıştır:
-1. **Modüler Tasarım:** Veri alma, modelleme ve çıkarım süreçleri `src/` altında bağımsız betiklere ayrılmıştır.
-2. **Feature Engineering Entegrasyonu:** Müşterinin borç/gelir dengesini yansıtan `Loan to Income` metriği hem eğitimde hem de çıkarım modülünde dinamik olarak türetilir.
-3. **Data Leakage Önleme:** `ColumnTransformer` ve `Pipeline` kullanılarak eksik veri tamamlama (`SimpleImputer`) ve z-score standardizasyonu (`StandardScaler`) yalnızca eğitim setine (`X_train`) uygulanmış, test seti hiçbir aşamada dönüştürücüleri etkilememiştir.
-4. **Sınıf Dengesizliği (Class Imbalance):** Finansal verilerde batık müşterilerin azınlıkta olması sebebiyle modeller `class_weight='balanced'` ile eğitilmiş ve dengeli değerlendirilmiştir.
+Key objectives:
+- Classify loan applicants into **Non-Default / Safe (0)** or **Default / High Risk (1)**.
+- Eliminate **Data Leakage** via an isolated, step-by-step transformation pipeline.
+- Export an inference-ready pipeline artifact (`.pkl`) capable of serving real-time predictions.
 
 ---
 
-## 📊 Model Performans Metrikleri
+## 🛠️ Architecture & Engineering Principles
 
-Eğitim sürecinde doğrusal (`Logistic Regression`) ve ağaç tabanlı (`Random Forest`) iki algoritma `ROC-AUC` metriği üzerinden karşılaştırılmıştır (%80 Train - %20 Stratified Test):
+1. **Modular Architecture:** Ingestion, pipeline construction, model evaluation, and inference are organized into dedicated modules inside `src/`.
+2. **Automated Feature Engineering:** A critical banking metric, `Loan to Income` ratio ($Loan / Income$), is dynamically computed within both training and production inference routines.
+3. **Data Leakage Prevention:** Preprocessing steps (`SimpleImputer` for missing values and `StandardScaler` for numeric scaling) are strictly fitted on `X_train` within a `ColumnTransformer` + `Pipeline` setup, completely shielding transformers from test data.
+4. **Class Imbalance Handling:** To account for the natural skew in credit default data, models are trained and evaluated with balanced class weights (`class_weight='balanced'`).
 
-| Algoritma | ROC-AUC Skoru | Accuracy | Precision (Sınıf 1) | Recall (Sınıf 1) | F1-Skor (Sınıf 1) |
+---
+
+## 📊 Model Performance & Evaluation
+
+Linear (`Logistic Regression`) and ensemble tree-based (`Random Forest`) models were benchmarked on a stratified 20% holdout test set using the `ROC-AUC` metric:
+
+| Model | ROC-AUC | Accuracy | Precision (Class 1) | Recall (Class 1) | F1-Score (Class 1) |
 |---|---|---|---|---|---|
-| **Logistic Regression** | 0.9873 | %94 | 0.71 | 0.96 | 0.81 |
-| **Random Forest (Best)** | **1.0000** | **%100** | **1.00** | **1.00** | **1.00** |
+| **Logistic Regression** | 0.9873 | 94% | 0.71 | 0.96 | 0.81 |
+| **Random Forest (Best)** | **1.0000** | **100%** | **1.00** | **1.00** | **1.00** |
 
-*En yüksek ROC-AUC skorunu üreten **Random Forest Pipeline**, diskte `models/credit_default_pipeline.pkl` konumuna serileştirilmiştir.*
+*The top-performing **Random Forest Pipeline** is serialized and stored at `models/credit_default_pipeline.pkl`.*
 
 ---
 
-## 📂 Proje Dizin Yapısı
+## 📂 Project Structure
 
 ```text
 credit-risk-prediction/
-├── data/                    # Ham ve işlenmiş veriler (.gitignore ile korunur)
-├── models/                  # Eğitilmiş serileştirilmiş boru hatları (.pkl)
-├── src/                     # Kaynak kod modülleri
-│   ├── make_dataset.py      # Veriyi uzak kaynaktan çeken otomatik script
-│   ├── train.py             # Feature engineering, pipeline inşası ve model eğitimi
-│   └── predict.py           # Canlı ortam çıkarım (inference) ve test modülü
-├── .gitignore               # Gereksiz/büyük dosyaları dışlayan git kural seti
-├── requirements.txt         # Proje bağımlılıkları ve kütüphane versiyonları
-└── README.md                # Kapsamlı proje dokümantasyonu
+├── data/                    # Raw and interim data assets (ignored via .gitignore)
+├── models/                  # Serialized pipeline artifacts (.pkl)
+├── src/                     # Core source code modules
+│   ├── make_dataset.py      # Automated data acquisition script
+│   ├── train.py             # Feature engineering, pipeline training & evaluation
+│   └── predict.py           # Production inference module & test scenarios
+├── .gitignore               # Ignored environments, cache, and data files
+├── requirements.txt         # Project dependencies and pinned library versions
+└── README.md                # Comprehensive project documentation
 ```
 
 ---
