@@ -99,3 +99,7 @@ python src/train.py
 ```bash
 python src/predict.py
 ```
+
+### 7. Launch the Interactive Web Application (Streamlit)
+```bash
+streamlit run app.py
